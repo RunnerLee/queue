@@ -6,7 +6,7 @@
  */
 require __DIR__ . '/../vendor/autoload.php';
 
-$schedule = new \Runner\Queue\SwooleSchedule([
+$schedule = new \Runner\Queue\Schedule([
     'name' => 'fucker',
     'listen' => 'default',
     'pid_file' => __DIR__ . '/queue_schedule.pid',

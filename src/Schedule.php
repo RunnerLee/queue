@@ -8,110 +8,43 @@
 namespace Runner\Queue;
 
 use FastD\Swoole\Process;
-use Runner\Queue\Contracts\QueueInterface;
 use Runner\Queue\Queues\RedisQueue;
-use Exception;
 use swoole_process;
 
-class Schedule
+class Schedule extends Process
 {
 
-    protected $config = [];
+    protected $config;
 
-    /**
-     * @var Consumer[]
-     */
-    protected $consumers = [];
+    protected $consumers;
 
-    /**
-     * @var Producer
-     */
     protected $producer;
 
-    /**
-     * @var Process
-     */
-    protected $worker;
-
-    /**
-     * @var QueueInterface
-     */
     protected $queue;
 
     public function __construct(array $config)
     {
         $this->config = $config;
+        parent::__construct("{$this->config['name']} queue schedule");
     }
 
-    public function run()
+    public function start()
     {
-        if (process_is_running("{$this->config['name']} queue schedule")) {
-            throw new Exception('queue is running');
-        }
-        $this->bootstrap();
+        $this->makeQueue();
 
-        if (!$pid = $this->worker->start()) {
-            throw new Exception('start queue schedule failed');
-        }
+        $pid = parent::start();
+
         file_put_contents($this->config['pid_file'], $pid);
+
+        return $pid;
     }
 
-    public function shutdown()
+    public function handle(swoole_process $worker)
     {
-        if (!process_is_running("{$this->config['name']} queue schedule")) {
-            return false;
-        }
-        swoole_process::kill(file_get_contents($this->config['pid_file']), SIGTERM);
-    }
-
-    public function listen()
-    {
-        return $this->config['listen'];
-    }
-
-    public function getSwooleQueueKey()
-    {
-        return $this->config['queue_key'];
-    }
-
-    public function queue()
-    {
-        return $this->queue;
-    }
-
-    protected function bootstrap()
-    {
-        $this->worker = new Process(
-            "{$this->config['name']} queue schedule",
-            function (swoole_process $worker) {
-                process_rename("{$this->config['name']} queue schedule");
-
-                /**
-                 * 创建消费者, 消费者内各自监听队列
-                 */
-                $this->makeConsumers();
-
-                $this->makeProducer();
-                /**
-                 * 创建生产者, 生产者自动
-                 */
-
-                /**
-                 * 注册进程回收
-                 */
-                $this->registerConsumerAutoRebootHandler();
-            }
-        );
-
-        /**
-         * 默认守护进程
-         */
-        $this->worker->daemon();
-
-        /**
-         * 创建队列
-         */
-        $this->queue = $this->makeQueue();
+        swoole_set_process_name($this->name);
+        $this->makeConsumers();
+        $this->makeProducer();
+        $this->registerConsumerAutoRebootHandler();
     }
 
     protected function makeConsumers()
@@ -134,7 +67,8 @@ class Schedule
         $this
             ->producer
             ->setQueue($this->config['listen'])
-            ->setConnection($this->queue);
+            ->setConnection($this->queue)
+            ->setSleep($this->config['sleep']);
 
         $this->producer->getProcess()->useQueue($this->config['queue_key']);
 
@@ -160,7 +94,8 @@ class Schedule
     {
         switch ($this->config['driver']) {
             case 'redis':
-                return new RedisQueue($this->config['connections']);
+                $this->queue = new RedisQueue($this->config['connections']);
+                break;
         }
     }
 }
