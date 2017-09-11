@@ -7,45 +7,48 @@
 
 namespace Runner\Queue;
 
+use FastD\Swoole\Process;
 use Runner\Queue\Contracts\QueueInterface;
-use Swoole\Process;
+use swoole_process;
 use Exception;
 use Throwable;
 
-class Consumer
+class Consumer extends Process
 {
-
-    protected $worker;
 
     protected $queue;
 
-    protected $pid;
-
+    /**
+     * @var QueueInterface
+     */
     protected $connection;
 
-    public function __construct($swooleQueueKey, $queue, QueueInterface $connection)
+    public function setQueue($queue)
     {
-        $this->worker = new Process([$this, 'doConsumer']);
-
-        $this->worker->useQueue($swooleQueueKey);
-
         $this->queue = $queue;
 
+        return $this;
+    }
+
+    public function setConnection(QueueInterface $connection)
+    {
         $this->connection = $connection;
+
+        return $this;
     }
 
-    public function run() {
-        return $this->pid = $this->worker->start();
-    }
-
-    public function pid()
+    public function start()
     {
-        return $this->pid;
+        if (true === $this->daemonize) {
+            $this->process->daemon();
+        }
+
+        return $this->process->start();
     }
 
-    public function doConsumer(Process $worker)
+    public function handle(swoole_process $worker)
     {
-        swoole_set_process_name('queue consumer');
+        swoole_set_process_name($this->name);
         while (true) {
             $content = $worker->pop();
             list($payload, $reserved) = json_decode($content, true);
@@ -66,11 +69,6 @@ class Consumer
         }
     }
 
-    protected function runJob($payload)
-    {
-        (new Job($payload))->run();
-    }
-
     protected function handleJobException(Job $job, $reserved)
     {
         if (1 === $job->maxRetries() - $job->attempts()) {
@@ -80,15 +78,15 @@ class Consumer
 
     public function registerTimeoutHandler($timeout)
     {
-        Process::signal(SIGALRM, function () {
-            Process::kill($this->worker->pid, SIGKILL);
+        $this->signal(SIGALRM, function () {
+            $this->kill($this->process->pid, SIGKILL);
         });
-
-        Process::alarm(1000000 * $timeout);
+        swoole_process::alarm(1000000 * $timeout);
     }
 
     public function releaseTimeoutHandler()
     {
-        Process::alarm(-1);
+        swoole_process::alarm(-1);
     }
+
 }

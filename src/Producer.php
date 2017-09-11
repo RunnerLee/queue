@@ -7,39 +7,59 @@
 
 namespace Runner\Queue;
 
+use FastD\Swoole\Process;
 use Runner\Queue\Contracts\QueueInterface;
-use Swoole\Process;
+use swoole_process;
 
-class Producer
+class Producer extends Process
 {
-    protected $worker;
+
+    /**
+     * @var QueueInterface
+     */
+    protected $connection;
 
     protected $queue;
 
-    protected $connection;
+    protected $sleep;
 
-    public function __construct($swooleQueueKey, $queue, QueueInterface $connection)
+    public function setQueue($queue)
     {
-        $this->worker = new Process([$this, 'doProducer']);
-        $this->worker->useQueue($swooleQueueKey);
         $this->queue = $queue;
+
+        return $this;
+    }
+
+    public function setConnection(QueueInterface $connection)
+    {
         $this->connection = $connection;
+
+        return $this;
     }
 
-    public function run()
+    public function setSleep($seconds)
     {
-        $this->worker->start();
+        $this->sleep = $seconds;
     }
 
-    public function doProducer(Process $worker)
+    public function start()
     {
-        swoole_set_process_name('queue producer');
-        while (1) {
+        if (true === $this->daemonize) {
+            $this->process->daemon();
+        }
+
+        return $this->process->start();
+    }
+
+    public function handle(swoole_process $worker)
+    {
+        swoole_set_process_name($this->name);
+        while (true) {
             list ($payload, $reserved) = $this->connection->pop($this->queue);
 
             if (is_null($payload)) {
-//                echo "sleeping...\n";
-                sleep(2);
+                echo "sleeping... \n";
+                sleep($this->sleep);
                 continue;
             }
 
@@ -48,4 +68,5 @@ class Producer
             ]));
         }
     }
+
 }

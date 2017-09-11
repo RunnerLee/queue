@@ -7,11 +7,11 @@
 
 namespace Runner\Queue;
 
+use FastD\Swoole\Process;
 use Runner\Queue\Contracts\QueueInterface;
 use Runner\Queue\Queues\RedisQueue;
-use Swoole\Process;
 use Exception;
-use InvalidArgumentException;
+use swoole_process;
 
 class Schedule
 {
@@ -61,7 +61,7 @@ class Schedule
         if (!process_is_running("{$this->config['name']} queue schedule")) {
             return false;
         }
-        Process::kill(file_get_contents($this->config['pid_file']), SIGTERM);
+        swoole_process::kill(file_get_contents($this->config['pid_file']), SIGTERM);
     }
 
     public function listen()
@@ -81,24 +81,28 @@ class Schedule
 
     protected function bootstrap()
     {
-        $this->worker = new Process(function (Process $worker) {
-            process_rename("{$this->config['name']} queue schedule");
+        $this->worker = new Process(
+            "{$this->config['name']} queue schedule",
+            function (swoole_process $worker) {
+                process_rename("{$this->config['name']} queue schedule");
 
-            /**
-             * 创建消费者, 消费者内各自监听队列
-             */
-            $this->makeConsumers();
+                /**
+                 * 创建消费者, 消费者内各自监听队列
+                 */
+                $this->makeConsumers();
 
-            $this->makeProducer();
-            /**
-             * 创建生产者, 生产者自动
-             */
+                $this->makeProducer();
+                /**
+                 * 创建生产者, 生产者自动
+                 */
 
-            /**
-             * 注册进程回收
-             */
-            $this->registerConsumerAutoRebootHandler();
-        });
+                /**
+                 * 注册进程回收
+                 */
+                $this->registerConsumerAutoRebootHandler();
+            }
+        );
+
         /**
          * 默认守护进程
          */
@@ -112,27 +116,38 @@ class Schedule
 
     protected function makeConsumers()
     {
-        $number = $this->config['consumer_num'] - count($this->consumers);
-        for ($i = 0; $i < $number; ++$i) {
-            $consumer = new Consumer($this->config['queue_key'], $this->config['listen'], $this->queue);
-            $consumer->run();
+        for ($i = 0; $i < $this->config['consumer_num']; ++$i) {
+            $consumer = new Consumer("{$this->config['name']} queue consumer");
+            $consumer
+                ->setQueue($this->config['listen'])
+                ->setConnection($this->queue);
+            $consumer->getProcess()->useQueue($this->config['queue_key']);
+            $consumer->start();
             $this->consumers[] = $consumer;
         }
     }
 
     protected function makeProducer()
     {
-        $this->producer = new Producer($this->config['queue_key'], $this->config['listen'], $this->queue);
-        $this->producer->run();
+        $this->producer = new Producer("{$this->config['name']} queue producer");
+
+        $this
+            ->producer
+            ->setQueue($this->config['listen'])
+            ->setConnection($this->queue);
+
+        $this->producer->getProcess()->useQueue($this->config['queue_key']);
+
+        $this->producer->start();
     }
 
     protected function registerConsumerAutoRebootHandler()
     {
         while (true) {
-            if ($ret = Process::wait()) {
+            if ($ret = swoole_process::wait()) {
                 foreach ($this->consumers as $consumer) {
                     if ($ret['pid'] === $consumer->pid()) {
-                        $pid = $consumer->run();
+                        $pid = $consumer->start();
                         echo "consumer restarted: {$pid}\n";
                         break;
                     }
