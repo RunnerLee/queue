@@ -53,7 +53,7 @@ class Producer extends Process
 
     public function handle(swoole_process $worker)
     {
-        swoole_set_process_name($this->name);
+        process_rename($this->name);
         while (true) {
             list ($payload, $reserved) = $this->connection->pop($this->queue);
 

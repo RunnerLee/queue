@@ -41,7 +41,7 @@ class Schedule extends Process
 
     public function handle(swoole_process $worker)
     {
-        swoole_set_process_name($this->name);
+        process_rename($this->name);
         $this->makeConsumers();
         $this->makeProducer();
         $this->registerConsumerAutoRebootHandler();

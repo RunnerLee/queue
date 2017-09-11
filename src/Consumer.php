@@ -48,7 +48,7 @@ class Consumer extends Process
 
     public function handle(swoole_process $worker)
     {
-        swoole_set_process_name($this->name);
+        process_rename($this->name);
         while (true) {
             $content = $worker->pop();
             list($payload, $reserved) = json_decode($content, true);
