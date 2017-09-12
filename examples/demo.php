@@ -10,8 +10,9 @@ $schedule = new \Runner\Queue\Schedule([
     'name' => 'fucker',
     'listen' => 'default',
     'pid_file' => __DIR__ . '/queue_schedule.pid',
-    'consumer_num' => 5,
+    'consumer_num' => 3,
     'queue_key' => random_int(1000000, 9999999),
+    'retry_after' => 60,
     'driver' => 'redis',
     'sleep' => 2,
     'connections' => [
@@ -22,4 +23,7 @@ $schedule = new \Runner\Queue\Schedule([
     ],
 ]);
 
+$schedule->daemon();
+
 $schedule->start();
+//$schedule->shutdown();

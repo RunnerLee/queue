@@ -58,7 +58,7 @@ class Producer extends Process
             list ($payload, $reserved) = $this->connection->pop($this->queue);
 
             if (is_null($payload)) {
-                echo "sleeping... \n";
+//                echo "sleeping... \n";
                 sleep($this->sleep);
                 continue;
             }

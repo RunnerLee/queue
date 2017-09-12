@@ -8,18 +8,32 @@
 namespace Runner\Queue;
 
 use FastD\Swoole\Process;
+use Runner\Queue\Contracts\QueueInterface;
 use Runner\Queue\Queues\RedisQueue;
 use swoole_process;
+use Exception;
 
 class Schedule extends Process
 {
 
+    /**
+     * @var array
+     */
     protected $config;
 
+    /**
+     * @var Consumer[]
+     */
     protected $consumers;
 
+    /**
+     * @var Producer
+     */
     protected $producer;
 
+    /**
+     * @var QueueInterface
+     */
     protected $queue;
 
     public function __construct(array $config)
@@ -30,13 +44,26 @@ class Schedule extends Process
 
     public function start()
     {
+        if (process_is_running($this->name)) {
+            throw new Exception("queue {$this->config['name']} is running");
+        }
+
         $this->makeQueue();
 
         $pid = parent::start();
 
         file_put_contents($this->config['pid_file'], $pid);
 
+        $this->daemon();
+
         return $pid;
+    }
+
+    public function shutdown()
+    {
+        if (process_is_running($this->name)) {
+            posix_kill(file_get_contents($this->config['pid_file']), SIGTERM);
+        }
     }
 
     public function handle(swoole_process $worker)
@@ -94,7 +121,7 @@ class Schedule extends Process
     {
         switch ($this->config['driver']) {
             case 'redis':
-                $this->queue = new RedisQueue($this->config['connections']);
+                $this->queue = new RedisQueue($this->config['connections'], $this->config['retry_after']);
                 break;
         }
     }

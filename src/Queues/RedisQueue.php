@@ -16,16 +16,24 @@ class RedisQueue implements QueueInterface
 
     protected $connector;
 
-    public function __construct($config)
+    protected $retryAfter;
+
+    public function __construct($config, $retryAfter = 60)
     {
         $this->connector = new Client($config);
+        $this->retryAfter = $retryAfter;
     }
 
     public function pop($queue)
     {
         $this->migrate($queue);
 
-        return $this->connector->eval(RedisLuaScripts::pop(), 2, $queue, "{$queue}:reserved", time() + 10);
+        return $this->connector->eval(
+            RedisLuaScripts::pop(),
+            2,
+            $queue, "{$queue}:reserved",
+            time() + $this->retryAfter
+        );
     }
 
     public function push($jobPayload, $queue)
