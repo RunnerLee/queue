@@ -59,7 +59,6 @@ class Schedule extends Process
     public function shutdown()
     {
         if (process_is_running($this->name)) {
-
             list($schedule, $producer) = explode(',', file_get_contents($this->config['pid_file']));
 
             swoole_process::kill($producer, SIGTERM);
