@@ -7,9 +7,6 @@
 
 namespace Runner\Queue;
 
-use Exception;
-use Throwable;
-
 class Job
 {
     protected $maxRetries;
@@ -32,11 +29,11 @@ class Job
     public function generatePayload()
     {
         return json_encode([
-            'id' => $this->id,
+            'id'          => $this->id,
             'max_retries' => $this->maxRetries,
-            'timeout' => $this->timeout,
-            'attempts' => $this->attempts,
-            'job' => $this->job,
+            'timeout'     => $this->timeout,
+            'attempts'    => $this->attempts,
+            'job'         => $this->job,
         ]);
     }
 

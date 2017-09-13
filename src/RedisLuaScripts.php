@@ -9,10 +9,9 @@ namespace Runner\Queue;
 
 class RedisLuaScripts
 {
-
     public static function migrate()
     {
-        return <<<LUA
+        return <<<'LUA'
 local val = redis.call('zrangebyscore', KEYS[1], '-inf', ARGV[1])
 if (next(val) ~= nil) then
     redis.call('zremrangebyrank', KEYS[1], 0, #val - 1)
@@ -27,7 +26,7 @@ LUA;
 
     public static function pop()
     {
-        return <<<LUA
+        return <<<'LUA'
 local job = redis.call('lpop', KEYS[1])
 local reserved = false
 
@@ -41,5 +40,4 @@ end
 return {job, reserved}
 LUA;
     }
-
 }

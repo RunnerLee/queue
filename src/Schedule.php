@@ -7,15 +7,14 @@
 
 namespace Runner\Queue;
 
+use Exception;
 use FastD\Swoole\Process;
 use Runner\Queue\Contracts\QueueInterface;
 use Runner\Queue\Queues\RedisQueue;
 use swoole_process;
-use Exception;
 
 class Schedule extends Process
 {
-
     /**
      * @var array
      */

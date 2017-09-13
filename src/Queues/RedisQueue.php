@@ -13,7 +13,6 @@ use Runner\Queue\RedisLuaScripts;
 
 class RedisQueue implements QueueInterface
 {
-
     protected $connector;
 
     protected $retryAfter;
