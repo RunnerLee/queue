@@ -9,7 +9,7 @@ require __DIR__ . '/../vendor/autoload.php';
 $schedule = new \Runner\Queue\Schedule([
     'name' => 'fucker',
     'listen' => 'default',
-    'pid_file' => __DIR__ . '/queue_schedule.pid',
+    'pid_file' => __DIR__ . '/queue.pid',
     'consumer_num' => 3,
     'queue_key' => random_int(1000000, 9999999),
     'retry_after' => 60,
@@ -25,5 +25,5 @@ $schedule = new \Runner\Queue\Schedule([
 
 $schedule->daemon();
 
-$schedule->start();
-//$schedule->shutdown();
+//$schedule->start();
+$schedule->shutdown();

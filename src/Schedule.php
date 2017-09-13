@@ -50,19 +50,20 @@ class Schedule extends Process
 
         $this->makeQueue();
 
-        $pid = parent::start();
-
-        file_put_contents($this->config['pid_file'], $pid);
+        $this->process->useQueue($this->config['queue_key']);
 
         $this->daemon();
 
-        return $pid;
+        return $this->process->start();
     }
 
     public function shutdown()
     {
         if (process_is_running($this->name)) {
-            posix_kill(file_get_contents($this->config['pid_file']), SIGTERM);
+
+            list($schedule, $producer) = explode(',', file_get_contents($this->config['pid_file']));
+
+            swoole_process::kill($producer, SIGTERM);
         }
     }
 
@@ -71,6 +72,9 @@ class Schedule extends Process
         process_rename($this->name);
         $this->makeConsumers();
         $this->makeProducer();
+
+        $this->savePidsToFile();
+
         $this->registerConsumerAutoRebootHandler();
     }
 
@@ -107,11 +111,22 @@ class Schedule extends Process
         while (true) {
             if ($ret = swoole_process::wait()) {
                 foreach ($this->consumers as $consumer) {
-                    if ($ret['pid'] === $consumer->pid()) {
+                    if ($ret['pid'] === $consumer->getProcess()->pid && $ret['signal'] === SIGTERM) {
                         $pid = $consumer->start();
                         echo "consumer restarted: {$pid}\n";
                         break;
                     }
+                }
+                if ($ret['pid'] === $this->producer->getProcess()->pid) {
+                    echo "\n";
+                    echo "producer {$this->producer->process->pid} exit\n";
+                    for ($i = 0; $i < $this->config['consumer_num']; ++$i) {
+                        $this->process->push('queue_shutdown');
+                    }
+
+                    echo "schedule {$this->process->pid} exit\n";
+
+                    exit(0);
                 }
             }
         }
@@ -124,5 +139,12 @@ class Schedule extends Process
                 $this->queue = new RedisQueue($this->config['connections'], $this->config['retry_after']);
                 break;
         }
+    }
+
+    protected function savePidsToFile()
+    {
+        $pids = "{$this->process->pid},{$this->producer->getProcess()->pid}";
+
+        file_put_contents($this->config['pid_file'], $pids);
     }
 }

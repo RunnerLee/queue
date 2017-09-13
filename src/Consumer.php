@@ -51,6 +51,12 @@ class Consumer extends Process
         process_rename($this->name);
         while (true) {
             $content = $worker->pop();
+
+            if ('queue_shutdown' === $content) {
+                echo "consumer {$this->process->pid} exit \n";
+                exit(0);
+            }
+
             list($payload, $reserved) = json_decode($content, true);
 
             $job = new Job($payload);
@@ -88,5 +94,4 @@ class Consumer extends Process
     {
         swoole_process::alarm(-1);
     }
-
 }
