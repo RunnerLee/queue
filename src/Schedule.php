@@ -8,11 +8,11 @@
 namespace Runner\Queue;
 
 use Exception;
-use Throwable;
 use FastD\Swoole\Process;
 use Runner\Queue\Contracts\QueueInterface;
 use Runner\Queue\Queues\RedisQueue;
 use swoole_process;
+use Throwable;
 
 class Schedule extends Process
 {
@@ -158,7 +158,7 @@ class Schedule extends Process
     {
         $pids = "{$this->process->pid},{$this->producer->getProcess()->pid}";
 
-        file_put_contents($this->config['pid_path'] . "/{$this->config['name']}_queue.pid", $pids);
+        file_put_contents($this->config['pid_path']."/{$this->config['name']}_queue.pid", $pids);
     }
 
     protected function fireEvent($event)
@@ -166,6 +166,7 @@ class Schedule extends Process
         if (!array_key_exists($event, $this->eventListeners)) {
             return 0;
         }
+
         try {
             call_user_func($this->eventListeners[$event]);
         } catch (Exception $e) {
