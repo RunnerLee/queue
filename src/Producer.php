@@ -13,7 +13,6 @@ use swoole_process;
 
 class Producer extends Process
 {
-
     /**
      * @var QueueInterface
      */
@@ -55,7 +54,7 @@ class Producer extends Process
     {
         process_rename($this->name);
         while (true) {
-            list ($payload, $reserved) = $this->connection->pop($this->queue);
+            list($payload, $reserved) = $this->connection->pop($this->queue);
 
             if (is_null($payload)) {
 //                echo "sleeping... \n";
@@ -64,9 +63,8 @@ class Producer extends Process
             }
 
             $worker->push(json_encode([
-                $payload, $reserved
+                $payload, $reserved,
             ]));
         }
     }
-
 }

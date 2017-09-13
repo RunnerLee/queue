@@ -1,5 +1,5 @@
 <?php
-/**
+/*
  * @auth: RunnerLee
  * @email: runnerleer@gmail.com
  * @website: https://runnerlee.com
