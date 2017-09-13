@@ -19,6 +19,7 @@ class RedisQueue implements QueueInterface
 
     public function __construct($config, $retryAfter = 60)
     {
+        $config['persistent'] = true;
         $this->connector = new Client($config);
         $this->retryAfter = $retryAfter;
     }
