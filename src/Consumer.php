@@ -7,15 +7,14 @@
 
 namespace Runner\Queue;
 
+use Exception;
 use FastD\Swoole\Process;
 use Runner\Queue\Contracts\QueueInterface;
 use swoole_process;
-use Exception;
 use Throwable;
 
 class Consumer extends Process
 {
-
     protected $queue;
 
     /**
@@ -88,5 +87,4 @@ class Consumer extends Process
     {
         swoole_process::alarm(-1);
     }
-
 }

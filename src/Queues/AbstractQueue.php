@@ -9,5 +9,4 @@ namespace Runner\Queue\Queues;
 
 abstract class AbstractQueue
 {
-
 }
