@@ -8,6 +8,7 @@
 namespace Runner\Queue;
 
 use Exception;
+use Throwable;
 use FastD\Swoole\Process;
 use Runner\Queue\Contracts\QueueInterface;
 use Runner\Queue\Queues\RedisQueue;
@@ -35,6 +36,8 @@ class Schedule extends Process
      */
     protected $queue;
 
+    protected $eventListeners = [];
+
     public function __construct(array $config)
     {
         $this->config = $config;
@@ -53,14 +56,17 @@ class Schedule extends Process
 
         $this->daemon();
 
-        return $this->process->start();
+        $pid = $this->process->start();
+
+        $this->fireEvent('start');
+
+        return $pid;
     }
 
     public function shutdown()
     {
         if (process_is_running($this->name)) {
-            list($schedule, $producer) = explode(',', file_get_contents($this->config['pid_file']));
-
+            list($schedule, $producer) = explode(',', file_get_contents("{$this->config['pid_path']}/{$this->config['name']}_queue.pid"));
             swoole_process::kill($producer, SIGTERM);
         }
     }
@@ -76,6 +82,13 @@ class Schedule extends Process
         $this->registerConsumerAutoRebootHandler();
     }
 
+    public function on($event, $callback)
+    {
+        $this->eventListeners[$event] = $callback;
+
+        return $this;
+    }
+
     protected function makeConsumers()
     {
         for ($i = 0; $i < $this->config['consumer_num']; ++$i) {
@@ -87,6 +100,8 @@ class Schedule extends Process
             $consumer->start();
             $this->consumers[] = $consumer;
         }
+
+        $this->fireEvent('consumerStart');
     }
 
     protected function makeProducer()
@@ -98,10 +113,10 @@ class Schedule extends Process
             ->setQueue($this->config['listen'])
             ->setConnection($this->queue)
             ->setSleep($this->config['sleep']);
-
         $this->producer->getProcess()->useQueue($this->config['queue_key']);
-
         $this->producer->start();
+
+        $this->fireEvent('producerStart');
     }
 
     protected function registerConsumerAutoRebootHandler()
@@ -109,21 +124,21 @@ class Schedule extends Process
         while (true) {
             if ($ret = swoole_process::wait()) {
                 foreach ($this->consumers as $consumer) {
-                    if ($ret['pid'] === $consumer->getProcess()->pid && $ret['signal'] === SIGTERM) {
-                        $pid = $consumer->start();
-                        echo "consumer restarted: {$pid}\n";
-                        break;
+                    if ($ret['pid'] === $consumer->getProcess()->pid) {
+                        if ($ret['signal'] === SIGTERM) {
+                            $consumer->start();
+                            $this->fireEvent('consumerReboot');
+                        } else {
+                            $this->fireEvent('consumerShutdown');
+                        }
                     }
                 }
                 if ($ret['pid'] === $this->producer->getProcess()->pid) {
-                    echo "\n";
-                    echo "producer {$this->producer->process->pid} exit\n";
+                    $this->fireEvent('producerShutdown');
                     for ($i = 0; $i < $this->config['consumer_num']; ++$i) {
                         $this->process->push('queue_shutdown');
                     }
-
-                    echo "schedule {$this->process->pid} exit\n";
-
+                    $this->fireEvent('shutdown');
                     exit(0);
                 }
             }
@@ -143,6 +158,18 @@ class Schedule extends Process
     {
         $pids = "{$this->process->pid},{$this->producer->getProcess()->pid}";
 
-        file_put_contents($this->config['pid_file'], $pids);
+        file_put_contents($this->config['pid_path'] . "/{$this->config['name']}_queue.pid", $pids);
+    }
+
+    protected function fireEvent($event)
+    {
+        if (!array_key_exists($event, $this->eventListeners)) {
+            return 0;
+        }
+        try {
+            call_user_func($this->eventListeners[$event]);
+        } catch (Exception $e) {
+        } catch (Throwable $e) {
+        }
     }
 }

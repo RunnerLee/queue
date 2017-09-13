@@ -52,7 +52,6 @@ class Consumer extends Process
             $content = $worker->pop();
 
             if ('queue_shutdown' === $content) {
-                echo "consumer {$this->process->pid} exit \n";
                 exit(0);
             }
 
