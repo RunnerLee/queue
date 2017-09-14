@@ -65,6 +65,8 @@ class Producer extends Process
             $worker->push(json_encode([
                 $payload, $reserved,
             ]));
+
+            // TODO 当队列达到一定数量时, 暂停push
         }
     }
 }
