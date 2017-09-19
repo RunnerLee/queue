@@ -13,17 +13,32 @@ use Runner\Queue\RedisLuaScripts;
 
 class RedisQueue implements QueueInterface
 {
+    /**
+     * @var Client
+     */
     protected $connector;
 
+    /**
+     * @var int
+     */
     protected $retryAfter;
 
-    public function __construct($config, $retryAfter = 60)
+    /**
+     * RedisQueue constructor.
+     * @param array $config
+     * @param int $retryAfter
+     */
+    public function __construct(array $config, $retryAfter = 60)
     {
         $config['persistent'] = true;
         $this->connector = new Client($config);
         $this->retryAfter = $retryAfter;
     }
 
+    /**
+     * @param string $queue
+     * @return array
+     */
     public function pop($queue)
     {
         $this->migrate($queue);
@@ -36,11 +51,22 @@ class RedisQueue implements QueueInterface
         );
     }
 
+    /**
+     * @param string $jobPayload
+     * @param string $queue
+     * @return void
+     */
     public function push($jobPayload, $queue)
     {
         $this->connector->rpush($queue, $jobPayload);
     }
 
+    /**
+     * @param string $jobPayload
+     * @param integer $timestamp
+     * @param string $queue
+     * @return void
+     */
     public function pushAt($jobPayload, $timestamp, $queue)
     {
         $this->connector->zadd("{$queue}:delayed", [
@@ -48,11 +74,20 @@ class RedisQueue implements QueueInterface
         ]);
     }
 
+    /**
+     * @param string $jobPayload
+     * @param string $queue
+     * @return void
+     */
     public function deleteReserved($jobPayload, $queue)
     {
         $this->connector->zrem("{$queue}:reserved", $jobPayload);
     }
 
+    /**
+     * @param string $queue
+     * @return void
+     */
     protected function migrate($queue)
     {
         $this->connector->eval(RedisLuaScripts::migrate(), 2, "{$queue}:reserved", $queue, time());

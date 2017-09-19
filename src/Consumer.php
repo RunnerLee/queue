@@ -15,6 +15,9 @@ use Throwable;
 
 class Consumer extends Process
 {
+    /**
+     * @var string
+     */
     protected $queue;
 
     /**
@@ -22,6 +25,10 @@ class Consumer extends Process
      */
     protected $connection;
 
+    /**
+     * @param string $queue
+     * @return $this
+     */
     public function setQueue($queue)
     {
         $this->queue = $queue;
@@ -29,6 +36,10 @@ class Consumer extends Process
         return $this;
     }
 
+    /**
+     * @param QueueInterface $connection
+     * @return $this
+     */
     public function setConnection(QueueInterface $connection)
     {
         $this->connection = $connection;
@@ -36,6 +47,9 @@ class Consumer extends Process
         return $this;
     }
 
+    /**
+     * @return void
+     */
     public function start()
     {
         if (true === $this->daemonize) {
@@ -45,9 +59,14 @@ class Consumer extends Process
         return $this->process->start();
     }
 
+    /**
+     * @param swoole_process $worker
+     * @return void
+     */
     public function handle(swoole_process $worker)
     {
         process_rename($this->name);
+
         while (true) {
             $content = $worker->pop();
 
@@ -73,6 +92,11 @@ class Consumer extends Process
         }
     }
 
+    /**
+     * @param Job $job
+     * @param $reserved
+     * @return void
+     */
     protected function handleJobException(Job $job, $reserved)
     {
         if (1 === $job->maxRetries() - $job->attempts()) {
@@ -80,14 +104,26 @@ class Consumer extends Process
         }
     }
 
+    /**
+     * @param $timeout
+     * @return void
+     */
     public function registerTimeoutHandler($timeout)
     {
+        /**
+         * 通过定时器实现超时自动杀进程, 由调度器重启进程
+         * 注意, 要是在 Job 里面执行 exit 操作, 会触发超时杀进程
+         */
         $this->signal(SIGALRM, function () {
+            swoole_process::alarm(-1);
             $this->kill($this->process->pid, SIGKILL);
         });
         swoole_process::alarm(1000000 * $timeout);
     }
 
+    /**
+     * @return void
+     */
     public function releaseTimeoutHandler()
     {
         swoole_process::alarm(-1);

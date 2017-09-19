@@ -6,11 +6,14 @@
  */
 require __DIR__.'/../vendor/autoload.php';
 
+require __DIR__ . '/Jobs/Alpha.php';
+require __DIR__ . '/Jobs/Beta.php';
+
 $schedule = new \Runner\Queue\Schedule([
-    'name'         => 'fucker',
+    'name'         => 'hello-world',
     'listen'       => 'default',
     'pid_path'     => __DIR__,
-    'consumer_num' => 3,
+    'consumer_num' => 1,
     'queue_key'    => random_int(1000000, 9999999),
     'retry_after'  => 60,
     'driver'       => 'redis',
@@ -22,8 +25,6 @@ $schedule = new \Runner\Queue\Schedule([
         'database' => 5,
     ],
 ]);
-
-$schedule->daemon();
 
 $schedule->start();
 //$schedule->shutdown();

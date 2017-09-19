@@ -36,26 +36,43 @@ class Schedule extends Process
      */
     protected $queue;
 
+    /**
+     * @var array
+     */
     protected $eventListeners = [];
 
+    /**
+     * Schedule constructor.
+     * @param array $config
+     */
     public function __construct(array $config)
     {
         $this->config = $config;
         parent::__construct("{$this->config['name']} queue schedule");
     }
 
+    /**
+     * @throws Exception
+     */
     public function start()
     {
         if (process_is_running($this->name)) {
             throw new Exception("queue {$this->config['name']} is running");
         }
 
-        $this->makeQueue();
+        /**
+         * 创建队列连接
+         */
+        $this->makeQueueConnection();
 
+        /**
+         * 用于当关闭队列时, 向消息队列推送关闭指令给消费者
+         */
         $this->process->useQueue($this->config['queue_key']);
 
-        $this->daemon();
-
+        /**
+         * 启动调度器进程
+         */
         $pid = $this->process->start();
 
         $this->fireEvent('start');
@@ -63,28 +80,54 @@ class Schedule extends Process
         return $pid;
     }
 
+    /**
+     * @return void
+     */
     public function shutdown()
     {
         if (process_is_running($this->name)) {
-            list($schedule, $producer) = explode(
-                ',',
-                file_get_contents("{$this->config['pid_path']}/{$this->config['name']}_queue.pid")
-            );
-            swoole_process::kill($producer, SIGTERM);
+            swoole_process::kill(file_get_contents($this->getPidFile()), SIGTERM);
         }
     }
 
+    /**
+     * @return void
+     */
     public function handle(swoole_process $worker)
     {
         process_rename($this->name);
+
+        /**
+         * 创建消费者
+         */
         $this->makeConsumers();
+
+        /**
+         * 创建生产者
+         */
         $this->makeProducer();
 
-        $this->savePidsToFile();
+        /**
+         * 保存 pid 文件
+         */
+        $this->savePidToFile();
 
-        $this->registerConsumerAutoRebootHandler();
+        /**
+         * 注册回收子进程监听
+         */
+        $this->registerWaitChildProcessHandler();
+
+        /**
+         * 注册进程关闭监听
+         */
+        $this->registerShutdownHandler();
     }
 
+    /**
+     * @param $event
+     * @param $callback
+     * @return $this
+     */
     public function on($event, $callback)
     {
         $this->eventListeners[$event] = $callback;
@@ -92,6 +135,9 @@ class Schedule extends Process
         return $this;
     }
 
+    /**
+     * @return void
+     */
     protected function makeConsumers()
     {
         for ($i = 0; $i < $this->config['consumer_num']; ++$i) {
@@ -107,6 +153,9 @@ class Schedule extends Process
         $this->fireEvent('consumerStart');
     }
 
+    /**
+     * @return void
+     */
     protected function makeProducer()
     {
         $this->producer = new Producer("{$this->config['name']} queue producer");
@@ -115,40 +164,57 @@ class Schedule extends Process
             ->producer
             ->setQueue($this->config['listen'])
             ->setConnection($this->queue)
-            ->setSleep($this->config['sleep']);
-        $this->producer->getProcess()->useQueue($this->config['queue_key']);
+            ->setSleep($this->config['sleep'])
+            ->setConsumerNum($this->config['consumer_num'])
+            ->getProcess()->useQueue($this->config['queue_key']);
         $this->producer->start();
 
         $this->fireEvent('producerStart');
     }
 
-    protected function registerConsumerAutoRebootHandler()
+    /**
+     * @return void
+     */
+    protected function registerWaitChildProcessHandler()
     {
-        while (true) {
-            if ($ret = swoole_process::wait()) {
-                foreach ($this->consumers as $consumer) {
+        swoole_process::signal(SIGCHLD, function () {
+            while ($ret = swoole_process::wait(false)) {
+                foreach ($this->consumers as $key => $consumer) {
                     if ($ret['pid'] === $consumer->getProcess()->pid) {
-                        if ($ret['signal'] === SIGTERM) {
+                        if (0 === $ret['code'] && 0 === $ret['signal']) {
+                            unset($this->consumers[$key]);
+                            $this->fireEvent('consumerShutdown');
+                        } else {
                             $consumer->start();
                             $this->fireEvent('consumerReboot');
-                        } else {
-                            $this->fireEvent('consumerShutdown');
                         }
                     }
                 }
                 if ($ret['pid'] === $this->producer->getProcess()->pid) {
                     $this->fireEvent('producerShutdown');
-                    for ($i = 0; $i < $this->config['consumer_num']; ++$i) {
-                        $this->process->push('queue_shutdown');
-                    }
-                    $this->fireEvent('shutdown');
-                    exit(0);
                 }
             }
-        }
+        });
     }
 
-    protected function makeQueue()
+    /**
+     * @return void
+     */
+    protected function registerShutdownHandler()
+    {
+        swoole_process::signal(SIGTERM, function () {
+            swoole_process::kill($this->producer->process->pid, SIGTERM);
+            for ($i = 0; $i < $this->config['consumer_num']; ++$i) {
+                $this->process->push('queue_shutdown');
+            }
+            exit(0);
+        });
+    }
+
+    /**
+     * @return void
+     */
+    protected function makeQueueConnection()
     {
         switch ($this->config['driver']) {
             case 'redis':
@@ -157,23 +223,36 @@ class Schedule extends Process
         }
     }
 
-    protected function savePidsToFile()
+    /**
+     * @return void
+     */
+    protected function savePidToFile()
     {
-        $pids = "{$this->process->pid},{$this->producer->getProcess()->pid}";
-
-        file_put_contents($this->config['pid_path']."/{$this->config['name']}_queue.pid", $pids);
+        file_put_contents(
+            $this->getPidFile(),
+            $this->process->pid
+        );
     }
 
+    /**
+     * @return string
+     */
+    protected function getPidFile()
+    {
+        return "{$this->config['pid_path']}/{$this->config['name']}_queue.pid";
+    }
+
+    /**
+     * @return void
+     */
     protected function fireEvent($event)
     {
-        if (!array_key_exists($event, $this->eventListeners)) {
-            return 0;
-        }
-
-        try {
-            call_user_func($this->eventListeners[$event]);
-        } catch (Exception $e) {
-        } catch (Throwable $e) {
+        if (array_key_exists($event, $this->eventListeners)) {
+            try {
+                call_user_func($this->eventListeners[$event]);
+            } catch (Exception $e) {
+            } catch (Throwable $e) {
+            }
         }
     }
 }

@@ -9,5 +9,8 @@ namespace Runner\Queue\Contracts;
 
 interface JobInterface
 {
+    /**
+     * @return void
+     */
     public function run();
 }

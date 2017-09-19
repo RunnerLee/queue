@@ -9,6 +9,9 @@ namespace Runner\Queue;
 
 class RedisLuaScripts
 {
+    /**
+     * @return string
+     */
     public static function migrate()
     {
         return <<<'LUA'
@@ -24,6 +27,9 @@ return val
 LUA;
     }
 
+    /**
+     * @return string
+     */
     public static function pop()
     {
         return <<<'LUA'
