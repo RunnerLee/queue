@@ -218,7 +218,7 @@ class Schedule extends Process
     {
         switch ($this->config['driver']) {
             case 'redis':
-                $this->queue = new RedisQueue($this->config['connections'], $this->config['retry_after']);
+                $this->queue = new RedisQueue($this->config['connection'], $this->config['retry_after']);
                 break;
         }
     }
