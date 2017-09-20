@@ -42,6 +42,7 @@ class Schedule extends Process
 
     /**
      * Schedule constructor.
+     *
      * @param array $config
      */
     public function __construct(array $config)
@@ -59,18 +60,18 @@ class Schedule extends Process
             throw new Exception("queue {$this->config['name']} is running");
         }
 
-        /**
+        /*
          * 创建队列连接
          */
         $this->makeQueueConnection();
 
-        /**
+        /*
          * 用于当关闭队列时, 向消息队列推送关闭指令给消费者
          */
         $this->process->useQueue($this->config['queue_key']);
 
         /**
-         * 启动调度器进程
+         * 启动调度器进程.
          */
         $pid = $this->process->start();
 
@@ -94,27 +95,27 @@ class Schedule extends Process
      */
     public function handle(swoole_process $worker)
     {
-        /**
+        /*
          * 创建消费者
          */
         $this->makeConsumers();
 
-        /**
+        /*
          * 创建生产者
          */
         $this->makeProducer();
 
-        /**
+        /*
          * 保存 pid 文件
          */
         $this->savePidToFile();
 
-        /**
+        /*
          * 注册回收子进程监听
          */
         $this->registerWaitChildProcessHandler();
 
-        /**
+        /*
          * 注册进程关闭监听
          */
         $this->registerShutdownHandler();
@@ -123,6 +124,7 @@ class Schedule extends Process
     /**
      * @param $event
      * @param $callback
+     *
      * @return $this
      */
     public function on($event, $callback)

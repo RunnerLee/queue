@@ -8,9 +8,6 @@
 
 namespace Runner\Queue\Testing;
 
-use Runner\Queue\Job;
-
 class JobTest extends \PHPUnit_Framework_TestCase
 {
-
 }

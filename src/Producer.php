@@ -24,17 +24,18 @@ class Producer extends Process
     protected $queue;
 
     /**
-     * @var integer
+     * @var int
      */
     protected $sleep;
 
     /**
-     * @var integer
+     * @var int
      */
     protected $consumerNum;
 
     /**
      * @param string $queue
+     *
      * @return $this
      */
     public function setQueue($queue)
@@ -46,6 +47,7 @@ class Producer extends Process
 
     /**
      * @param QueueInterface $connection
+     *
      * @return $this
      */
     public function setConnection(QueueInterface $connection)
@@ -56,7 +58,8 @@ class Producer extends Process
     }
 
     /**
-     * @param integer $number
+     * @param int $number
+     *
      * @return $this
      */
     public function setConsumerNum($number)
@@ -67,7 +70,8 @@ class Producer extends Process
     }
 
     /**
-     * @param integer $seconds
+     * @param int $seconds
+     *
      * @return $this
      */
     public function setSleep($seconds)
@@ -79,6 +83,7 @@ class Producer extends Process
 
     /**
      * @param swoole_process $worker
+     *
      * @return void
      */
     public function handle(swoole_process $worker)
@@ -95,7 +100,7 @@ class Producer extends Process
                 $payload, $reserved,
             ]));
 
-            /**
+            /*
              * 如果消息队列中的数量大于消费者总数, 先休眠一小会
              */
             if ($worker->statQueue()['queue_num'] > $this->consumerNum) {
