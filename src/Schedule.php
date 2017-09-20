@@ -95,8 +95,6 @@ class Schedule extends Process
      */
     public function handle(swoole_process $worker)
     {
-        process_rename($this->name);
-
         /**
          * 创建消费者
          */

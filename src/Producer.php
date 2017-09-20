@@ -78,20 +78,11 @@ class Producer extends Process
     }
 
     /**
-     * @return void
-     */
-    public function start()
-    {
-        return $this->process->start();
-    }
-
-    /**
      * @param swoole_process $worker
      * @return void
      */
     public function handle(swoole_process $worker)
     {
-        process_rename($this->name);
         while (true) {
             list($payload, $reserved) = $this->connection->pop($this->queue);
 
