@@ -26,6 +26,11 @@ class Consumer extends Process
     protected $connection;
 
     /**
+     * @var bool
+     */
+    protected $running = false;
+
+    /**
      * @param string $queue
      * @return $this
      */
@@ -54,6 +59,7 @@ class Consumer extends Process
     public function handle(swoole_process $worker)
     {
         while (true) {
+            $this->running = false;
             $content = $worker->pop();
 
             if ('queue_shutdown' === $content) {
@@ -69,6 +75,7 @@ class Consumer extends Process
             }
 
             try {
+                $this->running = true;
                 $job->run();
                 $this->connection->deleteReserved($reserved, $this->queue);
             } catch (Exception $exception) {
@@ -81,6 +88,16 @@ class Consumer extends Process
                 $this->releaseTimeoutHandler();
             }
         }
+    }
+
+    public function started()
+    {
+        return $this->process->pid ? swoole_process::kill($this->process->pid, 0) : false;
+    }
+
+    public function running()
+    {
+        return $this->running;
     }
 
     /**

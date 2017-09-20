@@ -10,7 +10,6 @@ namespace Runner\Queue;
 use Exception;
 use FastD\Swoole\Process;
 use Runner\Queue\Contracts\QueueInterface;
-use Runner\Queue\Queues\RedisQueue;
 use swoole_process;
 use Throwable;
 
@@ -202,7 +201,11 @@ class Schedule extends Process
     {
         swoole_process::signal(SIGTERM, function () {
             swoole_process::kill($this->producer->process->pid, SIGTERM);
-            for ($i = 0; $i < $this->config['consumer_num']; ++$i) {
+            $num = 0;
+            foreach ($this->consumers as $consumer) {
+                $consumer->started() && $num++;
+            }
+            for ($i = 0; $i < $num; ++$i) {
                 $this->process->push('queue_shutdown');
             }
             exit(0);
