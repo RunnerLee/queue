@@ -10,11 +10,15 @@ namespace Runner\Queue;
 use Exception;
 use FastD\Swoole\Process;
 use Runner\Queue\Contracts\QueueInterface;
+use Runner\Queue\Utils\Detectable;
 use swoole_process;
 use Throwable;
 
 class Consumer extends Process
 {
+
+    use Detectable;
+
     /**
      * @var string
      */
@@ -66,7 +70,7 @@ class Consumer extends Process
             $content = $worker->pop();
 
             if ('queue_shutdown' === $content) {
-                exit(0);
+                swoole_process::kill($this->process->pid, SIGTERM);
             }
 
             list($payload, $reserved) = json_decode($content, true);
@@ -91,11 +95,6 @@ class Consumer extends Process
                 $this->releaseTimeoutHandler();
             }
         }
-    }
-
-    public function started()
-    {
-        return $this->process->pid ? swoole_process::kill($this->process->pid, 0) : false;
     }
 
     public function running()

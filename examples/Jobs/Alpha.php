@@ -14,5 +14,6 @@ class Alpha implements JobInterface
     public function run()
     {
         echo "I'm alpha\n";
+        sleep(random_int(0, 3));
     }
 }

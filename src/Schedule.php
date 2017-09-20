@@ -41,13 +41,20 @@ class Schedule extends Process
     protected $eventListeners = [];
 
     /**
+     * @var bool
+     */
+    protected $shutdown = false;
+
+    /**
      * Schedule constructor.
      *
      * @param array $config
      */
-    public function __construct(array $config)
+    public function __construct(array $config, QueueInterface $queue)
     {
         $this->config = $config;
+        $queue->setRetryAfter($config['retry_after']);
+        $this->queue = $queue;
         parent::__construct("{$this->config['name']} queue schedule");
     }
 
@@ -59,11 +66,6 @@ class Schedule extends Process
         if (process_is_running($this->name)) {
             throw new Exception("queue {$this->config['name']} is running");
         }
-
-        /*
-         * 创建队列连接
-         */
-        $this->makeQueueConnection();
 
         /*
          * 用于当关闭队列时, 向消息队列推送关闭指令给消费者
@@ -180,7 +182,7 @@ class Schedule extends Process
             while ($ret = swoole_process::wait(false)) {
                 foreach ($this->consumers as $key => $consumer) {
                     if ($ret['pid'] === $consumer->getProcess()->pid) {
-                        if (0 === $ret['code'] && 0 === $ret['signal']) {
+                        if ($this->shutdown) {
                             unset($this->consumers[$key]);
                             $this->fireEvent('consumerShutdown');
                         } else {
@@ -203,27 +205,18 @@ class Schedule extends Process
     {
         swoole_process::signal(SIGTERM, function () {
             swoole_process::kill($this->producer->process->pid, SIGTERM);
+            $this->shutdown = true;
             $num = 0;
             foreach ($this->consumers as $consumer) {
                 $consumer->started() && $num++;
             }
+
             for ($i = 0; $i < $num; ++$i) {
                 $this->process->push('queue_shutdown');
             }
+            $this->fireEvent('shutdown');
             exit(0);
         });
-    }
-
-    /**
-     * @return void
-     */
-    protected function makeQueueConnection()
-    {
-        $factory = new QueueFactory([
-            $this->config['driver'] => $this->config['connection'],
-        ]);
-
-        $this->queue = $factory->connection($this->config['driver']);
     }
 
     /**

@@ -30,15 +30,25 @@ $queue = $factory->connection('redis');
 //    'default'
 //);
 
-//$queue->push(
-//    json_encode([
-//        'max_retries' => 5,
-//        'timeout'     => 10,
-//        'attempts'    => 0,
-//        'job'         => serialize(new Alpha()),
-//    ]),
-//    'default'
-//);
+$job = new Alpha();
+
+while (true) {
+    $number = random_int(50, 99);
+    echo "going to push {$number} jobs to the queue\n";
+    for ($i = 0; $i < $number; ++$i) {
+        $queue->push(
+            json_encode([
+                'max_retries' => 5,
+                'timeout'     => 2,
+                'attempts'    => 0,
+                'job'         => serialize($job),
+            ]),
+            'default'
+        );
+    }
+    echo "sleeping...\n";
+    sleep(2);
+}
 
 //$queue->push(
 //    json_encode([

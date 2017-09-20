@@ -40,4 +40,11 @@ interface QueueInterface
      * @return null|void
      */
     public function deleteReserved($jobPayload, $queue);
+
+    /**
+     * @param int $seconds
+     *
+     * @return static
+     */
+    public function setRetryAfter($seconds);
 }

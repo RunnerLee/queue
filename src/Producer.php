@@ -9,10 +9,14 @@ namespace Runner\Queue;
 
 use FastD\Swoole\Process;
 use Runner\Queue\Contracts\QueueInterface;
+use Runner\Queue\Utils\Detectable;
 use swoole_process;
 
 class Producer extends Process
 {
+
+    use Detectable;
+
     /**
      * @var QueueInterface
      */

@@ -27,18 +27,21 @@ class RedisQueue implements QueueInterface
      * RedisQueue constructor.
      *
      * @param array $config
-     * @param int   $retryAfter
      */
-    public function __construct(array $config, $retryAfter = 60)
+    public function __construct(array $config)
     {
         $config['persistent'] = true;
         $this->connector = new Client($config);
-        $this->retryAfter = $retryAfter;
     }
 
-    public function setRetryAfter($retryAfter)
+    /**
+     * @param int $seconds
+     *
+     * @return static
+     */
+    public function setRetryAfter($seconds)
     {
-        $this->retryAfter = $retryAfter;
+        $this->retryAfter = $seconds;
 
         return $this;
     }
