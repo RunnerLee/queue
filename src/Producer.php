@@ -82,10 +82,6 @@ class Producer extends Process
      */
     public function start()
     {
-        if (true === $this->daemonize) {
-            $this->process->daemon();
-        }
-
         return $this->process->start();
     }
 

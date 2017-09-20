@@ -216,11 +216,11 @@ class Schedule extends Process
      */
     protected function makeQueueConnection()
     {
-        switch ($this->config['driver']) {
-            case 'redis':
-                $this->queue = new RedisQueue($this->config['connection'], $this->config['retry_after']);
-                break;
-        }
+        $factory = new QueueFactory([
+            $this->config['driver'] => $this->config['connection'],
+        ]);
+
+        $this->queue = $factory->connection($this->config['driver']);
     }
 
     /**

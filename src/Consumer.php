@@ -52,10 +52,6 @@ class Consumer extends Process
      */
     public function start()
     {
-        if (true === $this->daemonize) {
-            $this->process->daemon();
-        }
-
         return $this->process->start();
     }
 
@@ -78,7 +74,9 @@ class Consumer extends Process
 
             $job = new Job($payload);
 
-            $this->registerTimeoutHandler($job->timeout());
+            if ($job->timeout()) {
+                $this->registerTimeoutHandler($job->timeout());
+            }
 
             try {
                 $job->run();
@@ -88,7 +86,10 @@ class Consumer extends Process
             } catch (Throwable $exception) {
                 $this->handleJobException($job, $reserved);
             }
-            $this->releaseTimeoutHandler();
+
+            if ($job->timeout()) {
+                $this->releaseTimeoutHandler();
+            }
         }
     }
 
@@ -99,6 +100,9 @@ class Consumer extends Process
      */
     protected function handleJobException(Job $job, $reserved)
     {
+        /**
+         * 如果没有设置最大重试次数, 将一直重试
+         */
         if (1 === $job->maxRetries() - $job->attempts()) {
             $this->connection->deleteReserved($reserved, $this->queue);
         }

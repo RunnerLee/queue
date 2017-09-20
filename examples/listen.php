@@ -10,7 +10,7 @@ require __DIR__ . '/Jobs/Alpha.php';
 require __DIR__ . '/Jobs/Beta.php';
 
 $schedule = new \Runner\Queue\Schedule([
-    'name'         => 'hello-world',
+    'name'         => 'runner',
     'listen'       => 'default',
     'pid_path'     => __DIR__,
     'consumer_num' => 1,

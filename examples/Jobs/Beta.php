@@ -16,7 +16,6 @@ class Beta implements JobInterface
     public function run()
     {
         echo "I'm beta\n";
-        sleep(20);
-//        throw new Exception('fuck');
+        throw new Exception('fuck');
     }
 }

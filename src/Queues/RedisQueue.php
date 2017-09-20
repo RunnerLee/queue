@@ -35,6 +35,13 @@ class RedisQueue implements QueueInterface
         $this->retryAfter = $retryAfter;
     }
 
+    public function setRetryAfter($retryAfter)
+    {
+        $this->retryAfter = $retryAfter;
+
+        return $this;
+    }
+
     /**
      * @param string $queue
      * @return array
