@@ -32,6 +32,7 @@ class Consumer extends Process
 
     /**
      * @param string $queue
+     *
      * @return $this
      */
     public function setQueue($queue)
@@ -43,6 +44,7 @@ class Consumer extends Process
 
     /**
      * @param QueueInterface $connection
+     *
      * @return $this
      */
     public function setConnection(QueueInterface $connection)
@@ -54,6 +56,7 @@ class Consumer extends Process
 
     /**
      * @param swoole_process $worker
+     *
      * @return void
      */
     public function handle(swoole_process $worker)
@@ -103,11 +106,12 @@ class Consumer extends Process
     /**
      * @param Job $job
      * @param $reserved
+     *
      * @return void
      */
     protected function handleJobException(Job $job, $reserved)
     {
-        /**
+        /*
          * 如果没有设置最大重试次数, 将一直重试
          */
         if (1 === $job->maxRetries() - $job->attempts()) {
@@ -117,11 +121,12 @@ class Consumer extends Process
 
     /**
      * @param $timeout
+     *
      * @return void
      */
     public function registerTimeoutHandler($timeout)
     {
-        /**
+        /*
          * 通过定时器实现超时自动杀进程, 由调度器重启进程
          * 注意, 要是在 Job 里面执行 exit 操作, 会触发超时杀进程
          */

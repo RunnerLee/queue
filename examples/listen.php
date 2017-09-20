@@ -6,8 +6,8 @@
  */
 require __DIR__.'/../vendor/autoload.php';
 
-require __DIR__ . '/Jobs/Alpha.php';
-require __DIR__ . '/Jobs/Beta.php';
+require __DIR__.'/Jobs/Alpha.php';
+require __DIR__.'/Jobs/Beta.php';
 
 $schedule = new \Runner\Queue\Schedule([
     'name'         => 'runner',
@@ -18,7 +18,7 @@ $schedule = new \Runner\Queue\Schedule([
     'retry_after'  => 60,
     'driver'       => 'redis',
     'sleep'        => 2,
-    'connection'  => [
+    'connection'   => [
         'host'     => '127.0.0.1',
         'port'     => '6379',
         'auth'     => null,

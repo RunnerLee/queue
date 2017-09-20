@@ -11,7 +11,6 @@ use Runner\Queue\Queues\RedisQueue;
 
 class QueueFactory
 {
-
     protected $config;
 
     protected $connections = [];
@@ -30,6 +29,7 @@ class QueueFactory
                     break;
             }
         }
+
         return $this->connections[$driver];
     }
 }

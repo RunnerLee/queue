@@ -25,8 +25,9 @@ class RedisQueue implements QueueInterface
 
     /**
      * RedisQueue constructor.
+     *
      * @param array $config
-     * @param int $retryAfter
+     * @param int   $retryAfter
      */
     public function __construct(array $config, $retryAfter = 60)
     {
@@ -44,6 +45,7 @@ class RedisQueue implements QueueInterface
 
     /**
      * @param string $queue
+     *
      * @return array
      */
     public function pop($queue)
@@ -61,6 +63,7 @@ class RedisQueue implements QueueInterface
     /**
      * @param string $jobPayload
      * @param string $queue
+     *
      * @return void
      */
     public function push($jobPayload, $queue)
@@ -70,8 +73,9 @@ class RedisQueue implements QueueInterface
 
     /**
      * @param string $jobPayload
-     * @param integer $timestamp
+     * @param int    $timestamp
      * @param string $queue
+     *
      * @return void
      */
     public function pushAt($jobPayload, $timestamp, $queue)
@@ -84,6 +88,7 @@ class RedisQueue implements QueueInterface
     /**
      * @param string $jobPayload
      * @param string $queue
+     *
      * @return void
      */
     public function deleteReserved($jobPayload, $queue)
@@ -93,6 +98,7 @@ class RedisQueue implements QueueInterface
 
     /**
      * @param string $queue
+     *
      * @return void
      */
     protected function migrate($queue)

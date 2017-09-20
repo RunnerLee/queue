@@ -10,17 +10,17 @@ namespace Runner\Queue;
 class Job
 {
     /**
-     * @var integer
+     * @var int
      */
     protected $maxRetries;
 
     /**
-     * @var integer
+     * @var int
      */
     protected $timeout;
 
     /**
-     * @var integer
+     * @var int
      */
     protected $attempts;
 
@@ -31,6 +31,7 @@ class Job
 
     /**
      * Job constructor.
+     *
      * @param string $payload
      */
     public function __construct($payload)

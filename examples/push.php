@@ -4,11 +4,10 @@
  * @email: runnerleer@gmail.com
  * @time: 2017-09
  */
-
 require __DIR__.'/../vendor/autoload.php';
 
-require __DIR__ . '/Jobs/Alpha.php';
-require __DIR__ . '/Jobs/Beta.php';
+require __DIR__.'/Jobs/Alpha.php';
+require __DIR__.'/Jobs/Beta.php';
 
 $factory = new \Runner\Queue\QueueFactory([
     'redis' => [
@@ -50,4 +49,3 @@ $queue = $factory->connection('redis');
 //    ]),
 //    'default'
 //);
-
