@@ -11,9 +11,9 @@ require __DIR__.'/Jobs/Beta.php';
 
 $queueFactory = new \Runner\Queue\QueueFactory([
     'redis' => [
-        'host' => '127.0.0.1',
-        'port' => '6379',
-        'auth' => null,
+        'host'     => '127.0.0.1',
+        'port'     => '6379',
+        'auth'     => null,
         'database' => 5,
     ],
 ]);

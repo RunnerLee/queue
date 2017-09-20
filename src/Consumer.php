@@ -16,7 +16,6 @@ use Throwable;
 
 class Consumer extends Process
 {
-
     use Detectable;
 
     /**
