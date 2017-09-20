@@ -5,11 +5,10 @@
  * @time: 2017-09
  */
 $process = new swoole_process(function (swoole_process $worker) {
-
     swoole_set_process_name('motherfucker');
 
     swoole_process::signal(SIGALRM, function () {
-        echo "123";
+        echo '123';
     });
 //    swoole_process::signal(SIGUSR2, function () {
 //        echo "goodbye\n";
@@ -22,4 +21,4 @@ $process = new swoole_process(function (swoole_process $worker) {
     exit;
 });
 
-echo $process->start() . "\n";
+echo $process->start()."\n";

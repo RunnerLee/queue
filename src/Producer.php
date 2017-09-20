@@ -14,7 +14,6 @@ use swoole_process;
 
 class Producer extends Process
 {
-
     use Detectable;
 
     /**
