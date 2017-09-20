@@ -20,15 +20,18 @@ $factory = new \Runner\Queue\QueueFactory([
 
 $queue = $factory->connection('redis');
 
-//$queue->push(
-//    json_encode([
-//        'max_retries' => 5,
-//        'timeout'     => 5,
-//        'attempts'    => 0,
-//        'job'         => serialize(new Beta()),
-//    ]),
-//    'default'
-//);
+$queue->pushAt(
+    json_encode([
+        'max_retries' => 5,
+        'timeout'     => 5,
+        'attempts'    => 0,
+        'job'         => serialize(new Beta()),
+    ]),
+    time() + 10,
+    'default'
+);
+
+exit;
 
 $job = new Alpha();
 

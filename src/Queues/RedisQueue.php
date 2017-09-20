@@ -84,7 +84,7 @@ class RedisQueue implements QueueInterface
     public function pushAt($jobPayload, $timestamp, $queue)
     {
         $this->connector->zadd("{$queue}:delayed", [
-            $timestamp => $jobPayload,
+            $jobPayload => $timestamp,
         ]);
     }
 
