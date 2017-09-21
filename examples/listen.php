@@ -27,9 +27,10 @@ $schedule = new \Runner\Queue\Schedule(
         'queue_key'    => 1000000,
         'retry_after'  => 60,
         'sleep'        => 2,
-    ],
-    $queueFactory->connection('redis')
+    ]
 );
+
+$schedule->setQueue($queueFactory->connection('redis'));
 
 $schedule->on('consumerReboot', function () {
     echo "consumer reboot\n";

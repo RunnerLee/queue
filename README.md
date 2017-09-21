@@ -15,27 +15,42 @@
 
 
 ```php
+<?php
 
-use \Runner\Queue\Schedule;
-
-$config = [
-    'name'         => 'fucker',     // 任务名称
-    'listen'       => 'default',    // 监听队列
-    'pid_path'     => __DIR__,      // pid 文件路径
-    'consumer_num' => 3,            // 消费者数量
-    'queue_key'    => random_int(1000000, 9999999), // swoole queue key
-    'retry_after'  => 60,   // 失败重试时间
-    'driver'       => 'redis',  // 驱动
-    'sleep'        => 2,    // 无任务时睡眠时间
-    'connections'  => [ // 驱动连接配置
+$queueFactory = new \Runner\Queue\QueueFactory([
+    'redis' => [
         'host'     => '127.0.0.1',
         'port'     => '6379',
         'auth'     => null,
         'database' => 5,
     ],
-];
+]);
 
-$schedule = new Schedule($config);
+$schedule = new \Runner\Queue\Schedule(
+    [
+        'name'         => 'runner',     // 任务名称
+        'listen'       => 'default',    // 监听队列
+        'pid_path'     => __DIR__,      // pid 文件目录
+        'consumer_num' => 3,            // 消费者数量
+        'queue_key'    => 1000000,      // 消息队列 key
+        'retry_after'  => 60,           // 失败 / 超时 重试时间
+        'sleep'        => 2,            // 睡眠时间
+    ]
+);
+
+$schedule->setQueue($queueFactory->connection('redis'));
+
+$schedule->on('consumerReboot', function () {
+    echo "consumer reboot\n";
+});
+
+$schedule->on('start', function () {
+    echo "mission started\n";
+});
+
+$schedule->on('shutdown', function () {
+    echo "mission stop\n";
+});
 
 $schedule->start();
 ```

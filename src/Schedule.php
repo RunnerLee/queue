@@ -50,12 +50,23 @@ class Schedule extends Process
      *
      * @param array $config
      */
-    public function __construct(array $config, QueueInterface $queue)
+    public function __construct(array $config)
     {
         $this->config = $config;
-        $queue->setRetryAfter($config['retry_after']);
-        $this->queue = $queue;
         parent::__construct("{$this->config['name']} queue schedule");
+    }
+
+    /**
+     * @param QueueInterface $queue
+     *
+     * @return $this
+     */
+    public function setQueue(QueueInterface $queue)
+    {
+        $queue->setRetryAfter($this->config['retry_after']);
+        $this->queue = $queue;
+
+        return $this;
     }
 
     /**
