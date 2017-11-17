@@ -103,11 +103,18 @@ class Producer extends Process
                 $payload, $reserved,
             ]));
 
-            /*
-             * 如果消息队列中的数量大于消费者总数, 先休眠一小会
+            /**
+             * 当等待被消费者提取的任务大于消费者总数的时候
+             * 死循环检查等待提取的任务是否有减少, 没减少则一直休眠
+             * 避免任务一直被提取, 但是却没被执行
              */
-            if ($worker->statQueue()['queue_num'] > $this->consumerNum) {
-                sleep($this->sleep);
+            if (($waitingJobs = $worker->statQueue()['queue_num']) > $this->consumerNum) {
+                while (true) {
+                    usleep(500000);
+                    if ($waitingJobs != $worker->statQueue()['queue_num']) {
+                        break;
+                    }
+                }
             }
         }
     }

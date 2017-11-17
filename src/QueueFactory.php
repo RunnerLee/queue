@@ -7,6 +7,7 @@
 
 namespace Runner\Queue;
 
+use Runner\Queue\Contracts\QueueInterface;
 use Runner\Queue\Queues\RedisQueue;
 
 class QueueFactory
@@ -20,6 +21,10 @@ class QueueFactory
         $this->config = $config;
     }
 
+    /**
+     * @param $driver
+     * @return QueueInterface
+     */
     public function connection($driver)
     {
         if (!isset($this->connections[$driver])) {

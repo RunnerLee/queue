@@ -6,8 +6,7 @@
  */
 require __DIR__.'/../vendor/autoload.php';
 
-require __DIR__.'/Jobs/Alpha.php';
-require __DIR__.'/Jobs/Beta.php';
+require __DIR__.'/Jobs/Demo.php';
 
 $queueFactory = new \Runner\Queue\QueueFactory([
     'redis' => [
@@ -23,14 +22,18 @@ $schedule = new \Runner\Queue\Schedule(
         'name'         => 'runner',
         'listen'       => 'default',
         'pid_path'     => __DIR__,
-        'consumer_num' => 3,
+        'consumer_num' => 5,
         'queue_key'    => 1000000,
         'retry_after'  => 60,
-        'sleep'        => 2,
+        'sleep'        => 1,
     ]
 );
 
 $schedule->setQueue($queueFactory->connection('redis'));
+
+$schedule->on('start', function () {
+    echo "started\n";
+});
 
 $schedule->on('consumerReboot', function () {
     echo "consumer reboot\n";
