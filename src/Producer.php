@@ -105,7 +105,7 @@ class Producer extends Process
 
             /**
              * 当等待被消费者提取的任务大于消费者总数的时候
-             * 死循环检查等待提取的任务是否有减少, 没减少则一直休眠
+             * 死循环检查等待提取的任务是否有减少, 没减少则一次循环休眠半秒
              * 避免任务一直被提取, 但是却没被执行
              */
             if (($waitingJobs = $worker->statQueue()['queue_num']) > $this->consumerNum) {
