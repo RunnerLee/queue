@@ -23,6 +23,7 @@ class QueueFactory
 
     /**
      * @param $driver
+     *
      * @return QueueInterface
      */
     public function connection($driver)

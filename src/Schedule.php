@@ -152,7 +152,7 @@ class Schedule extends Process
      */
     protected function makeConsumers()
     {
-        for ($i = 0; $i < $this->config['consumer_num']; ++$i) {
+        for ($i = 0; $i < $this->config['consumer_num']; $i++) {
             $consumer = new Consumer("{$this->config['name']} queue consumer");
             $consumer
                 ->setQueue($this->config['listen'])
@@ -222,7 +222,7 @@ class Schedule extends Process
                 $consumer->started() && $num++;
             }
 
-            for ($i = 0; $i < $num; ++$i) {
+            for ($i = 0; $i < $num; $i++) {
                 $this->process->push('queue_shutdown');
             }
             $this->fireEvent('shutdown');

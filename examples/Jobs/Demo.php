@@ -4,12 +4,10 @@
  * @email: runnerleer@gmail.com
  * @time: 2017 - 11
  */
-
 use Runner\Queue\Contracts\JobInterface;
 
 class Demo implements JobInterface
 {
-
     /**
      * @return void
      */
@@ -19,10 +17,10 @@ class Demo implements JobInterface
 
         $arr = [];
 
-        for ($i = 0; $i < 4; ++$i) {
+        for ($i = 0; $i < 4; $i++) {
             $arr[] = range(0, random_int(100, 200));
         }
 
-        file_put_contents(__DIR__ . '/queue.log', "1\n", FILE_APPEND);
+        file_put_contents(__DIR__.'/queue.log', "1\n", FILE_APPEND);
     }
 }

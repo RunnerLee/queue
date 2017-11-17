@@ -22,10 +22,9 @@ $queue = $factory->connection('redis');
 $times = 0;
 
 while (true) {
-
     $random = random_int(20, 30);
 
-    for ($i = 0; $i < $random; ++$i) {
+    for ($i = 0; $i < $random; $i++) {
         $queue->push(
             json_encode([
                 'max_retries' => 5,
