@@ -93,6 +93,8 @@ class Consumer extends Process
             if ($job->timeout()) {
                 $this->releaseTimeoutHandler();
             }
+
+            unset($job, $content, $payload, $reserved);
         }
     }
 
