@@ -95,7 +95,7 @@ class Producer extends Process
             list($payload, $reserved) = $this->connection->pop($this->queue);
 
             if (is_null($payload)) {
-                sleep($this->sleep);
+                usleep($this->sleep);
                 continue;
             }
 
@@ -105,12 +105,12 @@ class Producer extends Process
 
             /*
              * 当等待被消费者提取的任务大于消费者总数的时候
-             * 死循环检查等待提取的任务是否有减少, 没减少则一次循环休眠半秒
+             * 死循环检查等待提取的任务是否有减少, 没减少则一次循环休眠 0.1 秒
              * 避免任务一直被提取, 但是却没被执行
              */
             if (($waitingJobs = $worker->statQueue()['queue_num']) > $this->consumerNum) {
                 while (true) {
-                    usleep(500000);
+                    usleep(100000);
                     if ($waitingJobs != $worker->statQueue()['queue_num']) {
                         break;
                     }
