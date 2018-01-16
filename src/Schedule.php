@@ -104,6 +104,17 @@ class Schedule extends Process
     }
 
     /**
+     * @return bool
+     */
+    public function started()
+    {
+        if (file_exists($this->getPidFile()) && $pid = file_get_contents($this->getPidFile())) {
+            return swoole_process::kill($pid, 0);
+        }
+        return false;
+    }
+
+    /**
      * @return void
      */
     public function handle(swoole_process $worker)
