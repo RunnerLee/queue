@@ -98,7 +98,7 @@ class Schedule extends Process
      */
     public function shutdown()
     {
-        if (process_is_running($this->name)) {
+        if ($this->started()) {
             swoole_process::kill(file_get_contents($this->getPidFile()), SIGTERM);
         }
     }
